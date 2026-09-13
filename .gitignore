@@ -1,0 +1,20 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+models/
+# Virtual environments
+.venv
+uv.lock
+.*
+/volumes
+/*.yaml
+/standalone_embed.sh
+/test_milvus.py
+
+ui
+*.xml
+*.iml
