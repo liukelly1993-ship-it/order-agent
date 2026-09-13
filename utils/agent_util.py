@@ -34,6 +34,13 @@ async def get_agent():
     if agent is None:
         conn = await psycopg.AsyncConnection.connect(os.getenv('LANGGRAPH_PG_URL'), autocommit=True)
         checkpointer = AsyncPostgresSaver(conn=conn)
+
+        # TODO: 切换短期记忆的存储方式，比如基于Redis实现短期记忆
+        #redis_client = await asyn_get_redis_client()
+        #print("redis对象："+redis_client.__str__())
+        #checkpointer = AsyncRedisSaver(redis_client=redis_client) #基于Redis实现长期记忆
+        #await checkpointer.asetup() #初始化
+
         await checkpointer.setup()  # 首次建表,后续幂等(IF NOT EXISTS)
         llm = init_chat_model('deepseek-v4-flash')
         amap_mcp_tools = await  get_amap_mcp_tools()

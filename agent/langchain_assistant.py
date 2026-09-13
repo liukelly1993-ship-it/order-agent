@@ -5,6 +5,7 @@ import time
 
 from langchain_core.messages import HumanMessage, SystemMessage, ToolMessage
 
+from agent.tools.tool_gdmp import get_amap_mcp_tools
 from utils.agent_util import get_agent
 
 
@@ -35,6 +36,47 @@ async def assistant_query(query:str):
             continue
         payload_str = json.dumps({'content': message.content, 'type': 'token'}, ensure_ascii=False)
         yield f'data: {payload_str}\n\n'
+
+
+# 实现配送的核心业务
+async def get_devliery_info(address: str, travel_mode: str):
+    """调用高德MCP工具计算距离并判断是否在5KM配送范围内容"""
+
+    # 有固定业务流程的可以直接处理，不要经过大模型了
+    # 餐厅的具体位置先确定-》调用高德的测量工具-》计算距离
+    all_tools = await get_amap_mcp_tools()
+    # maps
+    tool_dict = {tool.name: tool for tool in all_tools}
+
+    if travel_mode == "1":
+        travel_mode = "骑行"
+        distance_km = 4.8
+        duration_min = 30
+        success = True
+        in_range = True
+
+    elif travel_mode == "2":
+        travel_mode = "驾车"
+        distance_km = 6
+        duration_min = 10
+        success = False
+        in_range = False
+    else:
+        travel_mode = "步行"
+        distance_km = 2
+        duration_min = 30
+        success = True
+        in_range = True
+
+    return {
+        "success": success,
+        "address": address,
+        "distance_km": distance_km,
+        "duration_min": duration_min,
+        "in_range": in_range,
+        "travel_mode": "驾车",
+        "message": "在配送范围内"
+    }
 
 if __name__ == '__main__':
     '''

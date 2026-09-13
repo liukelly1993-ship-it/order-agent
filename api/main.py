@@ -2,7 +2,7 @@
 from fastapi import FastAPI
 from pydantic import BaseModel, Field
 from starlette.responses import StreamingResponse
-from agent.langchain_assistant import assistant_query
+from agent.langchain_assistant import assistant_query, get_devliery_info
 import sys
 from pathlib import Path
 import os
@@ -13,6 +13,7 @@ from tools.redis_utils import get_redis_client
 from dotenv import load_dotenv
 import re
 from difflib import SequenceMatcher
+from typing import Literal
 
 load_dotenv()
 
@@ -31,10 +32,25 @@ class FAQResponse(BaseModel):  # faq/suggest接口返回的数据格式
     suggestions: list[FAQItem]
 
 
+class DeliveryRequest(BaseModel):
+    address: str = Field(description="目标配送地址")
+    travel_mode: str = Field(default="2", description="配送方式 1-骑行  2-驾车  3-直线距离")
+
+
 class ChatRequest(BaseModel):
     # 定义一个ChatRequest类，继承自BaseModel
     query: str = Field(description="用户输入的问题")  # 定义query字段，类型为字符串，并添加描述说明这是用户输入的问题
     limit: int = Field(default=1, description="查询的结果数量，默认为1")  # 定义limit字段，类型为整数，并添加描述说明这是返回结果数量，默认值为5
+
+
+class DeliveryResponse(BaseModel):
+    success: bool = Field(..., description="响应是否成功")
+    message: str = Field(..., description="响应消息")
+    address: str = Field(..., description="目标配送地址")
+    distance_km: float = Field(..., description="配送距离（单位：公里）")
+    duration_min: int | None = Field(default=None, description="配送时间（单位：分钟）")
+    in_range: bool | None = Field(default=None, description="是否在配送范围内")
+    travel_mode: Literal["骑行", "驾车", "直线"] = Field(default="驾车", description="配送方式")
 
 
 @app.post("/chat")
@@ -118,6 +134,13 @@ def faq_endpoint(query: str, limit: int):  # request:ChatRequest前端传递的�
         query=query,
         suggestions=[faq for _, faq in top_faqs]
     )
+
+
+@app.post("/delivery", response_model=DeliveryResponse)
+async def delivery(request: DeliveryRequest):
+    """配送接口查询"""
+    result = await get_devliery_info(request.address, request.travel_mode)
+    return result
 
 
 @app.post("/clear_history")
