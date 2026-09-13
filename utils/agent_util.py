@@ -5,7 +5,7 @@ from langchain.chat_models import init_chat_model
 from langgraph.checkpoint.memory import InMemorySaver
 
 from agent.tools.tool_milvus import user_favorite_dishes
-from agent.tools.tool_mysql import search_dishes
+from agent.tools.tool_mysql import search_dishes, make_reservation
 
 # utils/agent_util.py → 上两级 = 项目根
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
@@ -21,7 +21,7 @@ def get_agent():
     """
     checkpointer = InMemorySaver()
     model = init_chat_model('deepseek-v4-flash')
-    tools = [search_dishes,user_favorite_dishes]
+    tools = [search_dishes,user_favorite_dishes,make_reservation]
     with open(str(PROJECT_ROOT / 'agent' / 'prompt' / 'prompt.txt'), 'r', encoding='utf-8') as f:
         system_prompt = f.read()
     agent = create_agent(

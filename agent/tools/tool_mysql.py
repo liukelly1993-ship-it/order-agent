@@ -6,6 +6,7 @@ from langchain_core import tools
 from langchain_core.tools import tool
 from pymysql.cursors import DictCursor
 
+from agent.dto.reservation_dto import ReservationToolArgsInfo
 
 load_dotenv()
 
@@ -42,3 +43,26 @@ def search_dishes():
             ''')
             special_dishes = cursor.fetchall()
     return special_dishes
+
+@tool(args_schema=ReservationToolArgsInfo) # args_schema: 用户指定的可选参数模式
+def make_reservation(num_people,num_children,arrival_time,seat_preference,main_dish_preference,other_comments):
+    """进行餐厅预订"""
+    try:
+        with pymysql.connect(
+                host=os.getenv("HOST"),
+                user=os.getenv("USER"),
+                password=os.getenv("PASSWORD"),
+                database=os.getenv("DATABASE"),
+                port=int(os.getenv("PORT")),
+                charset=os.getenv("CHARSET")
+            ) as conn: # type:ignore
+                with conn.cursor(DictCursor) as cursor:
+                    cursor.execute("""                                                 
+                        insert into reservation_order
+                        (num_people, num_children, arrival_time, seat_preference, main_dish_preference, other_comments)
+                        values (%s, %s, %s, %s, %s, %s)
+                    """, (num_people, num_children, arrival_time, seat_preference, main_dish_preference, other_comments))
+                    conn.commit()
+                    return "预订成功"
+    except Exception as e:
+        return f"预订失败: {str(e)}"
