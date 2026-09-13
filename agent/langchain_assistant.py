@@ -1,8 +1,9 @@
 import asyncio
+import json
 import uuid
 import time
 
-from langchain_core.messages import HumanMessage
+from langchain_core.messages import HumanMessage, SystemMessage, ToolMessage
 
 from utils.agent_util import get_agent
 
@@ -17,6 +18,23 @@ async def test_agent():
         ]
     }, config=config)
     print(res["messages"][-1].content)
+
+
+#调用agent使用SSE方式将每个块返回给前端
+async def assistant_query(query:str):
+    agent = await get_agent()
+    config={'configurable':{'thread_id':str(uuid.uuid4())}}
+    async for chunk in agent.astream({
+        "messages": [
+            SystemMessage(content=f"当前时间：{time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())}"),
+            HumanMessage(content=query),
+        ]
+    }, config=config, stream_mode=['messages']):
+        message = chunk[0]
+        if type(message) == ToolMessage:
+            continue
+        payload_str = json.dumps({'content': message.content, 'type': 'token'}, ensure_ascii=False)
+        yield f'data: {payload_str}\n\n'
 
 if __name__ == '__main__':
     '''
