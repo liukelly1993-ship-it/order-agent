@@ -1,5 +1,4 @@
 import uuid
-from mimetypes import init
 from pathlib import Path
 
 from langchain.agents import create_agent
@@ -7,7 +6,7 @@ from langchain.chat_models import init_chat_model
 from langchain_core.messages import HumanMessage
 from langgraph.checkpoint.memory import InMemorySaver
 
-from agent.tools.tools import search_dishes
+from agent.tools.tool_mysql import search_dishes
 
 ROOT_PATH = Path(__file__).parent.parent
 

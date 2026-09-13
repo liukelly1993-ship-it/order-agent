@@ -1,6 +1,5 @@
 import os
 
-import main
 import pymysql
 from dotenv import load_dotenv
 from langchain_core.tools import tool
