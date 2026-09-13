@@ -80,20 +80,20 @@ async def get_devliery_info(address: str, travel_mode: str):
     tool_dict = {tool.name: tool for tool in all_tools}
 
     if travel_mode == "1":
-        travel_mode = "骑行"
+        mode_label = "骑行"
         distance_km = 4.8
         duration_min = 30
         success = True
         in_range = True
 
     elif travel_mode == "2":
-        travel_mode = "驾车"
+        mode_label = "驾车"
         distance_km = 6
         duration_min = 10
         success = False
         in_range = False
     else:
-        travel_mode = "步行"
+        mode_label = "直线"
         distance_km = 2
         duration_min = 30
         success = True
@@ -105,8 +105,8 @@ async def get_devliery_info(address: str, travel_mode: str):
         "distance_km": distance_km,
         "duration_min": duration_min,
         "in_range": in_range,
-        "travel_mode": "驾车",
-        "message": "在配送范围内"
+        "travel_mode": mode_label,
+        "message": "在配送范围内" if in_range else "超出配送范围，暂不支持配送"
     }
 
 if __name__ == '__main__':

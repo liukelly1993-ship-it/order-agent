@@ -1,6 +1,7 @@
 # 提供Agent所有能力接口
 from fastapi import FastAPI
 from pydantic import BaseModel, Field
+from fastapi.responses import FileResponse
 from starlette.responses import StreamingResponse
 from agent.langchain_assistant import assistant_query, get_devliery_info
 import sys
@@ -18,6 +19,12 @@ from typing import Literal
 load_dotenv()
 
 app = FastAPI()
+
+
+@app.get("/", include_in_schema=False)
+def frontend():
+    """返回餐厅助手前端页面。"""
+    return FileResponse(ROOT_PATH / "frontend" / "index.html")
 
 
 class FAQItem(BaseModel):
