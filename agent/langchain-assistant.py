@@ -38,4 +38,22 @@ if __name__ == '__main__':
     print(result)
     print(result['messages'][-1].content)
     # '''
-    asyncio.run(test_agent())
+    # asyncio.run(test_agent())
+    '''
+    >>>> MCP工具初始化成功，可用工具：15个
+已经帮你生成好了，点击即可使用 👇
+
+🧭 **一键导航（高德）**
+amapuri://navi?sourceApplication=amap_mcp&lon=121.474806&lat=31.237166&dev=1&style=2
+
+🚕 **一键打车（中山公园 → 六合餐厅）**
+amapuri://drive/takeTaxi?sourceApplication=amapplatform&slat=31.216794&slon=121.427434&sname=%E4%B8%AD%E5%B1%B1%E5%85%AC%E5%9B%AD&dlon=121.474806&dlat=31.237166&dname=%E5%85%AD%E5%90%88%E9%A4%90%E5%8E%85%EF%BC%88%E4%BA%BA%E6%B0%91%E5%B9%BF%E5%9C%BA%E5%85%AD%E5%90%88%E5%A4%A7%E5%8E%A6%EF%BC%89
+
+📍 地址：上海黄浦区人民广场六合大厦
+📞 电话：021-12345678
+
+需要我再帮你订个位子吗？😊
+
+进程已结束，退出代码为 0
+
+    '''

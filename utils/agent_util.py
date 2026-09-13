@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 from langchain.agents import create_agent
 from langchain.agents.middleware import ToolRetryMiddleware, ModelRetryMiddleware
 from langchain.chat_models import init_chat_model
-from langgraph.checkpoint.postgres import PostgresSaver
+from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
 
 from agent.tools.tool_gdmp import get_amap_mcp_tools
 from agent.tools.tool_milvus import user_favorite_dishes
@@ -15,6 +15,9 @@ from agent.tools.tool_mysql import search_dishes, make_reservation
 # utils/agent_util.py → 上两级 = 项目根
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 load_dotenv(PROJECT_ROOT / '.env')
+
+# 模块级单例占位,get_agent() 第一次调用时填充
+agent = None
 
 
 async def get_agent():
@@ -29,9 +32,9 @@ async def get_agent():
     # (因为 get_agent() 要 return agent,不能让 with 块提前关闭连接)
     global agent #todo 加double check lock
     if agent is None:
-        conn = psycopg.connect(os.getenv('LANGGRAPH_PG_URL'), autocommit=True)
-        checkpointer = PostgresSaver(conn=conn)
-        checkpointer.setup()  # 首次建表,后续幂等(IF NOT EXISTS)
+        conn = await psycopg.AsyncConnection.connect(os.getenv('LANGGRAPH_PG_URL'), autocommit=True)
+        checkpointer = AsyncPostgresSaver(conn=conn)
+        await checkpointer.setup()  # 首次建表,后续幂等(IF NOT EXISTS)
         llm = init_chat_model('deepseek-v4-flash')
         amap_mcp_tools = await  get_amap_mcp_tools()
         tools = [search_dishes,user_favorite_dishes,make_reservation] + amap_mcp_tools

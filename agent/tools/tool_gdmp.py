@@ -1,6 +1,7 @@
 from langchain_mcp_adapters.client import MultiServerMCPClient
 import asyncio
 
+_mcp_tools = None
 async def get_amap_mcp_tools():
     global _mcp_tools
     if _mcp_tools is None:
