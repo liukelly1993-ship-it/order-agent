@@ -45,7 +45,7 @@ def search_dishes():
     return special_dishes
 
 @tool(args_schema=ReservationToolArgsInfo) # args_schema: 用户指定的可选参数模式
-def make_reservation(num_people,num_children,arrival_time,seat_preference,main_dish_preference,other_comments):
+def make_reservation(num_adults,num_children,arrival_time,seat_preference,main_dish_preference,other_comments):
     """进行餐厅预订"""
     try:
         with pymysql.connect(
@@ -57,11 +57,11 @@ def make_reservation(num_people,num_children,arrival_time,seat_preference,main_d
                 charset=os.getenv("DB_CHARSET")
             ) as conn: # type:ignore
                 with conn.cursor(DictCursor) as cursor:
-                    cursor.execute("""                                                 
+                    cursor.execute("""
                         insert into reservation_order
-                        (num_people, num_children, arrival_time, seat_preference, main_dish_preference, other_comments)
+                        (num_adults, num_children, arrival_time, seat_preference, main_dish_preference, other_comments)
                         values (%s, %s, %s, %s, %s, %s)
-                    """, (num_people, num_children, arrival_time, seat_preference, main_dish_preference, other_comments))
+                    """, (num_adults, num_children, arrival_time, seat_preference, main_dish_preference, other_comments))
                     conn.commit()
                     return "预订成功"
     except Exception as e:
