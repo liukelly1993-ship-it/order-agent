@@ -49,12 +49,12 @@ def make_reservation(num_people,num_children,arrival_time,seat_preference,main_d
     """进行餐厅预订"""
     try:
         with pymysql.connect(
-                host=os.getenv("HOST"),
-                user=os.getenv("USER"),
-                password=os.getenv("PASSWORD"),
-                database=os.getenv("DATABASE"),
-                port=int(os.getenv("PORT")),
-                charset=os.getenv("CHARSET")
+                host=os.getenv("DB_HOST"),
+                user=os.getenv("DB_USER"),
+                password=os.getenv("DB_PASSWORD"),
+                database=os.getenv("DB_DATABASE"),
+                port=int(os.getenv("DB_PORT")),
+                charset=os.getenv("DB_CHARSET")
             ) as conn: # type:ignore
                 with conn.cursor(DictCursor) as cursor:
                     cursor.execute("""                                                 
