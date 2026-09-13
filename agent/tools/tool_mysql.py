@@ -2,6 +2,7 @@ import os
 
 import pymysql
 from dotenv import load_dotenv
+from langchain_core import tools
 from langchain_core.tools import tool
 from pymysql.cursors import DictCursor
 

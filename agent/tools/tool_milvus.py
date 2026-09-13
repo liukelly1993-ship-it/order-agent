@@ -1,4 +1,5 @@
 import os
+from json import tool
 from pathlib import Path
 
 import pymysql
@@ -156,7 +157,39 @@ def search_data(query):
     return search_resp
 
 
+# @tool
+def user_favorite_dishes(query:str):
+    '''根据用户的口味推荐菜品'''
+    client = get_client()
+    collection_name = os.getenv('COLLECTION_NAME')
+    vector_query = get_embedding().embed_query(query)
+    result = client.search(collection_name=collection_name, data=[vector_query], anns_field="vector",
+                           output_fields=["text"], limit=2, )
+    # 解析result
+    '''
+    data: [
+    [
+        {'id': 469050758446208451, 'distance': 0.5767658948898315, 'entity': {'text': '菜品名称:麻婆豆腐;价格: 18.00;描述:四川传统名菜,嫩滑豆腐配麻辣汤汁,下饭神器;菜品类别:川菜;麻辣程度: 3;口味:麻辣鲜香;主料:嫩豆腐,牛肉末,豆瓣酱,花椒;烹饪方法:烧炒;是否素食: 0;过敏源:大豆,可能含有麸质'
+            }
+        },
+        {'id': 469050758446208450, 'distance': 0.5191517472267151, 'entity': {'text': '菜品名称:宫保鸡丁;价格: 28.00;描述:经典川菜,鸡肉丁配花生米,酸甜微辣,口感丰富;菜品类别:川菜;麻辣程度: 2;口味:酸甜微辣;主料:鸡肉,花生米,青椒,红椒,葱段;烹饪方法:爆炒;是否素食: 0;过敏源:花生,可能含有麸质'
+            }
+        }
+    ]
+]
+    '''
+    if result:
+        final_result=[]
+        for item in result[0]:
+            # distance = item['distance']
+            # todo if dis > 0.5: #阈值判断，根据实际效果调整
+            item_str = item['entity']['text']
+            final_result.append(item_str)
+        return final_result
+    else:
+        return '在当前库里面没有找到和用户喜好相关的菜品'
 if __name__ == '__main__':
-    insert_data()
-    res = search_data("川菜")
+    # insert_data()
+    # res = search_data("川菜")
+    res = user_favorite_dishes("川菜")
     print(res)
