@@ -37,12 +37,36 @@ async def assistant_query(query: str, thread_id: str | None = None):
             SystemMessage(content=f"当前时间：{time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())}"),
             HumanMessage(content=query),
         ]
-    }, config=config, stream_mode=['messages']):
-        message = chunk[0]
-        if type(message) == ToolMessage:
+    }, config=config, stream_mode='updates'):
+        # Bugfix: 原版 stream_mode='messages' 在 deepseek 模型下,chunk 的
+        # AIMessageChunk.content 永远是空字符串,真实推理过程在 reasoning_content
+        # 字段里被当作流式增量吐出来,前端 SSE 拿不到实际回答.
+        # 改用 stream_mode='updates',每个节点(model/tools)一次性产出完整消息,
+        # 拿到的 content 是真实回答;代价是丢掉了真正的逐 token 流,但比
+        # 永远空内容强.
+        if not isinstance(chunk, dict):
             continue
-        payload_str = json.dumps({'content': message.content, 'type': 'token'}, ensure_ascii=False)
-        yield f'data: {payload_str}\n\n'
+        for node_name, node_msgs in chunk.items():
+            # node_msgs 实际是 {'messages': [AIMessage, ...]} 而不是 list
+            msgs = node_msgs.get('messages', []) if isinstance(node_msgs, dict) else (node_msgs or [])
+            for message in msgs:
+                if type(message) == ToolMessage:
+                    continue
+                # model 节点 AIMessageChunk.content 可能是 str 或 list[dict]
+                content = message.content
+                if isinstance(content, list):
+                    # 形如 [{'type': 'text', 'text': '...'}]
+                    content = ''.join(
+                        block.get('text', '') for block in content
+                        if isinstance(block, dict) and block.get('type') == 'text'
+                    )
+                if not content:
+                    continue
+                payload_str = json.dumps(
+                    {'content': content, 'type': 'token'},
+                    ensure_ascii=False,
+                )
+                yield f'data: {payload_str}\n\n'
 
 
 # 实现配送的核心业务

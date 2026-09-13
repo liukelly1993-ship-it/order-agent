@@ -9,7 +9,7 @@ import os
 
 ROOT_PATH = Path(__file__).parent.parent
 sys.path.insert(0, str(ROOT_PATH))  # 将项目根目录添加到系统中
-from tools.redis_utils import get_redis_client
+from utils.redis_utils import get_redis_client
 from dotenv import load_dotenv
 import re
 from difflib import SequenceMatcher
