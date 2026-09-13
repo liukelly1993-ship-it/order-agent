@@ -1,3 +1,4 @@
+import asyncio
 import uuid
 import time
 
@@ -6,7 +7,19 @@ from langchain_core.messages import HumanMessage
 from utils.agent_util import get_agent
 
 
+async def test_agent():
+    agent = await get_agent()
+    config = {"configurable": {"thread_id": "001"}}
+
+    res = await agent.ainvoke({
+        "messages": [
+            {"role": "user", "content": "我现在在中山公园，帮我规划路线如何去你们餐厅？"}
+        ]
+    }, config=config)
+    print(res["messages"][-1].content)
+
 if __name__ == '__main__':
+    '''
     agent = get_agent()
     thread_id = str(uuid.uuid4())
     # todo thread_id应该是传进来的, 需要添加到数据库中做唯一索引,做幂等
@@ -24,3 +37,5 @@ if __name__ == '__main__':
 
     print(result)
     print(result['messages'][-1].content)
+    # '''
+    asyncio.run(test_agent())
