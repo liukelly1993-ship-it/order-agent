@@ -21,10 +21,17 @@ async def test_agent():
     print(res["messages"][-1].content)
 
 
-#调用agent使用SSE方式将每个块返回给前端
-async def assistant_query(query:str):
+# 调用agent使用SSE方式将每个块返回给前端
+async def assistant_query(query: str, thread_id: str | None = None):
+    """SSE 流式调用 agent,逐 token yield 给前端.
+
+    Bugfix #2: 原版 thread_id 写死 '001',后改为永远 uuid 新建,均无法由调用方
+    维护会话(前端想续聊拿不回历史). 改为按调用方传入的 thread_id 隔离,
+    无参时才生成 uuid 作为新会话标识.
+    """
+    thread_id = thread_id or str(uuid.uuid4())
     agent = await get_agent()
-    config={'configurable':{'thread_id':str(uuid.uuid4())}}
+    config = {'configurable': {'thread_id': thread_id}}
     async for chunk in agent.astream({
         "messages": [
             SystemMessage(content=f"当前时间：{time.strftime('%Y-%m-%d %H:%M:%S', time.localtime())}"),

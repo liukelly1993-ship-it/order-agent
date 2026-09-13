@@ -18,6 +18,11 @@ load_dotenv(PROJECT_ROOT / '.env')
 
 # 模块级单例占位,get_agent() 第一次调用时填充
 agent = None
+# Bugfix #4: 原版 conn 是裸局部变量,get_agent() 返回后没人持有 PG 连接,
+# 进程退出时依赖 GC 关闭,不一定可靠;且若将来重建 agent,旧 conn 无法释放.
+# 改为模块级变量持有,并新增 close_agent() 入口,供 FastAPI lifespan/shutdown
+# 显式释放连接与清空单例,避免泄漏.
+_pg_conn: psycopg.AsyncConnection | None = None
 
 
 async def get_agent():
@@ -30,10 +35,10 @@ async def get_agent():
     """
     # 直接建连接 + 传给 saver,绕开 from_conn_string 的 context manager
     # (因为 get_agent() 要 return agent,不能让 with 块提前关闭连接)
-    global agent #todo 加double check lock
+    global agent, _pg_conn  # todo 加double check lock
     if agent is None:
-        conn = await psycopg.AsyncConnection.connect(os.getenv('LANGGRAPH_PG_URL'), autocommit=True)
-        checkpointer = AsyncPostgresSaver(conn=conn)
+        _pg_conn = await psycopg.AsyncConnection.connect(os.getenv('LANGGRAPH_PG_URL'), autocommit=True)
+        checkpointer = AsyncPostgresSaver(conn=_pg_conn)
 
         # TODO: 切换短期记忆的存储方式，比如基于Redis实现短期记忆
         #redis_client = await asyn_get_redis_client()
@@ -68,3 +73,16 @@ async def get_agent():
             ]
         )
     return agent
+
+
+async def close_agent():
+    """FastAPI lifespan/shutdown 时调用,显式释放 PG 连接与清空 agent 单例.
+
+    Bugfix #4 配套: 不调用也没问题(进程退出 GC 会兜底),但显式关闭更可控,
+    也能让 PG 端立刻收到 FIN 而不是等到 socket 超时.
+    """
+    global agent, _pg_conn
+    agent = None
+    if _pg_conn is not None:
+        await _pg_conn.close()
+        _pg_conn = None

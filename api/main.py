@@ -41,6 +41,10 @@ class ChatRequest(BaseModel):
     # 定义一个ChatRequest类，继承自BaseModel
     query: str = Field(description="用户输入的问题")  # 定义query字段，类型为字符串，并添加描述说明这是用户输入的问题
     limit: int = Field(default=1, description="查询的结果数量，默认为1")  # 定义limit字段，类型为整数，并添加描述说明这是返回结果数量，默认值为5
+    # Bugfix #2: 原版只有 query,thread_id 由 assistant_query 内部硬编码 '001'
+    # (后改为永远 uuid 新建),均无法让调用方/前端维护会话. 改为显式传入,
+    # 不传则由 assistant_query 内部新建 uuid 作为新会话.
+    thread_id: str | None = Field(default=None, description="会话ID;不传则由后端新建会话")
 
 
 class DeliveryResponse(BaseModel):
@@ -54,10 +58,13 @@ class DeliveryResponse(BaseModel):
 
 
 @app.post("/chat")
-def chat_endpoint(request: ChatRequest):
+async def chat_endpoint(request: ChatRequest):
     # 以流式的方式返回结果
+    # Bugfix #1: 原版 def 端点,但 assistant_query 是 async generator,
+    # StreamingResponse 在同步端点里接收 async generator 会抛 RuntimeError.
+    # 改为 async def,FastAPI 自动从 async 端点消费 async generator.
     return StreamingResponse(
-        assistant_query(query=request.query),
+        assistant_query(query=request.query, thread_id=request.thread_id),
         media_type="text/event-stream"
     )
 
