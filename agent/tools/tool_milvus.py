@@ -1,8 +1,8 @@
 import os
-from json import tool
 from pathlib import Path
 
 import pymysql
+from langchain_core.tools import tool
 from langchain_huggingface import HuggingFaceEmbeddings
 from pymysql.cursors import DictCursor
 # 项目根目录: agent/tools/tool_milvus.py → 上三级 = 项目根
@@ -157,7 +157,7 @@ def search_data(query):
     return search_resp
 
 
-# @tool
+@tool
 def user_favorite_dishes(query:str):
     '''根据用户的口味推荐菜品'''
     client = get_client()
@@ -188,8 +188,9 @@ def user_favorite_dishes(query:str):
         return final_result
     else:
         return '在当前库里面没有找到和用户喜好相关的菜品'
-if __name__ == '__main__':
-    # insert_data()
-    # res = search_data("川菜")
-    res = user_favorite_dishes("川菜")
-    print(res)
+# if __name__ == '__main__':
+#     # insert_data()
+#     # res = search_data("川菜")
+#     # res = user_favorite_dishes("川菜")
+#     # print(res)
+#     pass
