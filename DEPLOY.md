@@ -1,5 +1,63 @@
 # 本地 Docker + ngrok 部署
 
+## 访问地址
+
+| 用途 | 地址 | 当前状态 |
+| --- | --- | --- |
+| 当前前端（ngrok） | `https://uprising-ladybug-curly.ngrok-free.dev/` | 已验证 HTTP 200 |
+| 当前后端健康检查 | `https://uprising-ladybug-curly.ngrok-free.dev/healthz` | 已验证 HTTP 200 |
+| 本地前端/后端 | `http://127.0.0.1:8080/` | 由 Docker 容器提供 |
+| GitHub Pages 前端 | `https://liukelly1993-ship-it.github.io/order-agent/` | 推送并完成 Actions 发布后可用 |
+
+ngrok 免费域名直接用浏览器打开时可能出现一次提示页；GitHub Pages 前端请求 API 时会自动携带跳过提示页的请求头。
+
+## 技术架构
+
+```mermaid
+flowchart LR
+    Browser[浏览器]
+    Pages[GitHub Pages\nfrontend/index.html]
+    Ngrok[ngrok HTTPS 隧道\n*.ngrok-free.dev]
+    API[Docker: order-agent-api\nFastAPI + LangChain]
+    MySQL[(宿主机 MySQL)]
+    PostgreSQL[(宿主机 PostgreSQL\nLangGraph Checkpointer)]
+    Redis[(宿主机 Redis\nFAQ)]
+    Milvus[(宿主机 Milvus\n菜品向量库)]
+    BGE[BGE-base-zh\n容器内 CPU 推理]
+    DeepSeek[DeepSeek 模型 API]
+    Amap[高德 MCP]
+
+    Browser -->|静态页面| Pages
+    Pages -->|HTTPS: REST / SSE| Ngrok
+    Browser -->|临时直接访问| Ngrok
+    Ngrok -->|127.0.0.1:8080| API
+    API -->|host.docker.internal| MySQL
+    API -->|host.docker.internal| PostgreSQL
+    API -->|host.docker.internal| Redis
+    API -->|host.docker.internal| Milvus
+    API --> BGE
+    API --> DeepSeek
+    API --> Amap
+```
+
+### 请求链路
+
+| 功能 | 请求路径 | 后端依赖 |
+| --- | --- | --- |
+| 智能聊天 | `POST /chat`（SSE） | LangGraph、PostgreSQL、DeepSeek；按问题调用 MySQL、Milvus/BGE 或高德 MCP 工具 |
+| FAQ | `GET /faq/suggest` | Redis |
+| 配送查询 | `POST /delivery` | 当前配送规则与高德 MCP 初始化 |
+| 前端健康检查 | `GET /openapi.json` | FastAPI |
+
+容器仅暴露 `127.0.0.1:8080`，MySQL、PostgreSQL、Redis 和 Milvus 不通过 ngrok 暴露公网。容器通过 `host.docker.internal` 访问宿主机服务。
+
+### 资源实测
+
+- 镜像大小：约 802 MB。
+- API 空载内存：约 227 MiB。
+- BGE/Milvus 菜品检索后：约 541～554 MiB。
+- Compose 为 API 容器设置的上限：2 GiB。
+
 ## 当前结构
 
 - 前端：GitHub Pages 发布 `frontend/`
