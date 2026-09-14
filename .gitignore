@@ -10,8 +10,14 @@ models/
 .venv
 uv.lock
 .*
+!.dockerignore
+!.github/
+!.github/workflows/
+!.github/workflows/pages.yml
 /volumes
 /*.yaml
+!/compose.yaml
+!/docker-constraints.txt
 /standalone_embed.sh
 /test_milvus.py
 

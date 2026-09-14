@@ -1,0 +1,30 @@
+services:
+  order-agent-api:
+    build:
+      context: .
+    container_name: order-agent-api
+    init: true
+    env_file:
+      - .env
+    environment:
+      SERVICE_HOST_OVERRIDE: host.docker.internal
+      DB_HOST: host.docker.internal
+      EMBEDDING_DEVICE: cpu
+      CORS_ALLOW_ORIGINS: https://liukelly1993-ship-it.github.io
+      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+    ports:
+      - "127.0.0.1:8080:8080"
+    restart: unless-stopped
+    mem_limit: 2g
+    stop_grace_period: 30s
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/healthz', timeout=3)
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s

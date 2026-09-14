@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="api-base-url" content="https://uprising-ladybug-curly.ngrok-free.dev" />
   <link rel="icon" href="data:," />
   <title>六合餐厅 · 智能助手</title>
   <style>
@@ -358,6 +359,14 @@
     const chatInput = $("#chat-input");
     const chatSubmit = $("#chat-submit");
     const apiStatus = $("#api-status");
+    const configuredApiBase = document
+      .querySelector('meta[name="api-base-url"]')
+      .content.replace(/\/+$/, "");
+    const usesExternalApi = window.location.protocol === "file:" || window.location.hostname.endsWith("github.io");
+    const apiUrl = (path) => `${usesExternalApi ? configuredApiBase : ""}${path}`;
+    const tunnelHeaders = configuredApiBase.includes(".ngrok-free.")
+      ? { "ngrok-skip-browser-warning": "true" }
+      : {};
     let threadId = createThreadId();
     let chatBusy = false;
 
@@ -448,9 +457,9 @@
       setApiStatus("回答生成中", "online");
 
       try {
-        const response = await fetch("/chat", {
+        const response = await fetch(apiUrl("/chat"), {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json", ...tunnelHeaders },
           body: JSON.stringify({ query: text, thread_id: threadId }),
         });
         if (!response.ok) throw new Error(await readError(response, `HTTP ${response.status}`));
@@ -512,7 +521,9 @@
       results.append(loading);
       try {
         const params = new URLSearchParams({ query: text, limit: "2" });
-        const response = await fetch(`/faq/suggest?${params.toString()}`);
+        const response = await fetch(apiUrl(`/faq/suggest?${params.toString()}`), {
+          headers: tunnelHeaders,
+        });
         if (!response.ok) throw new Error(await readError(response, `HTTP ${response.status}`));
         const data = await response.json();
         results.replaceChildren();
@@ -607,9 +618,9 @@
       button.disabled = true;
       setApiStatus("配送查询中", "online");
       try {
-        const response = await fetch("/delivery", {
+        const response = await fetch(apiUrl("/delivery"), {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json", ...tunnelHeaders },
           body: JSON.stringify({ address, travel_mode: $("#travel-mode").value }),
         });
         if (!response.ok) throw new Error(await readError(response, `HTTP ${response.status}`));
@@ -630,7 +641,10 @@
 
     async function checkApi() {
       try {
-        const response = await fetch("/openapi.json", { cache: "no-store" });
+        const response = await fetch(apiUrl("/openapi.json"), {
+          cache: "no-store",
+          headers: tunnelHeaders,
+        });
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         setApiStatus("接口在线", "online");
       } catch (error) {

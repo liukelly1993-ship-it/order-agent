@@ -11,6 +11,7 @@ from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
 from agent.tools.tool_gdmp import get_amap_mcp_tools
 from agent.tools.tool_milvus import user_favorite_dishes
 from agent.tools.tool_mysql import search_dishes, make_reservation
+from utils.env_utils import resolve_service_url
 
 # utils/agent_util.py → 上两级 = 项目根
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
@@ -37,7 +38,10 @@ async def get_agent():
     # (因为 get_agent() 要 return agent,不能让 with 块提前关闭连接)
     global agent, _pg_conn  # todo 加double check lock
     if agent is None:
-        _pg_conn = await psycopg.AsyncConnection.connect(os.getenv('LANGGRAPH_PG_URL'), autocommit=True)
+        _pg_conn = await psycopg.AsyncConnection.connect(
+            resolve_service_url(os.getenv('LANGGRAPH_PG_URL')),
+            autocommit=True,
+        )
         checkpointer = AsyncPostgresSaver(conn=_pg_conn)
 
         # TODO: 切换短期记忆的存储方式，比如基于Redis实现短期记忆

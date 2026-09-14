@@ -21,17 +21,22 @@ load_dotenv()
 
 app = FastAPI()
 
-# 允许所有来源跨域访问:本地开发(file://、127.0.0.1、localhost)和未来部署的
-# 任意域名/IP 都能调后端 API;同时支持 SSE 流式响应(text/event-stream).
-# 注意:allow_origins=["*"] 时不能用 allow_credentials=True(CORS 规范限制),
-# 如以后需要带 cookie / auth header,请改为具体域名白名单而非 "*".
+_DEFAULT_CORS_ORIGINS = [
+    "http://127.0.0.1:8080",
+    "http://localhost:8080",
+    "https://liukelly1993-ship-it.github.io",
+]
+_EXTRA_CORS_ORIGINS = [
+    origin.strip()
+    for origin in os.getenv("CORS_ALLOW_ORIGINS", "").split(",")
+    if origin.strip()
+]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=list(dict.fromkeys(_DEFAULT_CORS_ORIGINS + _EXTRA_CORS_ORIGINS)),
     allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
-    expose_headers=["*"],
 )
 
 
@@ -39,6 +44,11 @@ app.add_middleware(
 def frontend():
     """返回餐厅助手前端页面。"""
     return FileResponse(ROOT_PATH / "frontend" / "index.html")
+
+
+@app.get("/healthz", include_in_schema=False)
+def healthz():
+    return {"status": "ok"}
 
 
 class FAQItem(BaseModel):
