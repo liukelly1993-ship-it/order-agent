@@ -99,7 +99,13 @@ docker compose stop order-agent-api
 
 ## GitHub Pages
 
-`.github/workflows/pages.yml` 会在 `master` 分支的 `frontend/` 发生变化后发布页面。首次使用前，需要在仓库 `Settings → Pages` 中将 Source 设置为 `GitHub Actions`。代码 push 由仓库所有者执行。
+`.github/workflows/pages.yml` 会在 `master` 分支的 `frontend/` 或工作流自身发生变化后，把 `frontend/` 发布到 `https://liukelly1993-ship-it.github.io/order-agent/`。
+
+注意：
+
+- **GitHub Actions 评估 workflow 文件用的是 default branch（当前是 `main`）上的版本**，所以 `master` 上对 `pages.yml` 的修改必须同步到 `main`，否则修改不会生效。
+- `configure-pages` 步骤加了 `enablement: true`，首次运行会自动创建 Pages site，不需要手动去 `Settings → Pages` 选择 Source。
+- 代码 push 由仓库所有者执行。
 
 ## 注意事项
 
