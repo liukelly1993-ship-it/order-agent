@@ -2,12 +2,14 @@
 
 ## 访问地址
 
+两个公网前端入口共用同一条 ngrok API 隧道（前端 `index.html` 里写死 `api-base-url=https://uprising-ladybug-curly.ngrok-free.dev`），只是前端部署位置不同。
+
 | 用途 | 地址 | 当前状态 |
 | --- | --- | --- |
-| 当前前端（ngrok） | `https://uprising-ladybug-curly.ngrok-free.dev/` | 已验证 HTTP 200 |
-| 当前后端健康检查 | `https://uprising-ladybug-curly.ngrok-free.dev/healthz` | 已验证 HTTP 200 |
+| GitHub Pages 前端（固定域名，推荐） | `https://liukelly1993-ship-it.github.io/order-agent/` | 已验证 HTTP 200 |
+| ngrok 前端（临时域名，重启 ngrok 会变） | `https://uprising-ladybug-curly.ngrok-free.dev/` | 已验证 HTTP 200 |
+| 后端健康检查 | `https://uprising-ladybug-curly.ngrok-free.dev/healthz` | 已验证 HTTP 200 |
 | 本地前端/后端 | `http://127.0.0.1:8080/` | 由 Docker 容器提供 |
-| GitHub Pages 前端 | `https://liukelly1993-ship-it.github.io/order-agent/` | 推送并完成 Actions 发布后可用 |
 
 ngrok 免费域名直接用浏览器打开时可能出现一次提示页；GitHub Pages 前端请求 API 时会自动携带跳过提示页的请求头。
 
