@@ -1,5 +1,6 @@
 # 提供Agent所有能力接口
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from fastapi.responses import FileResponse
 from starlette.responses import StreamingResponse
@@ -19,6 +20,19 @@ from typing import Literal
 load_dotenv()
 
 app = FastAPI()
+
+# 允许所有来源跨域访问:本地开发(file://、127.0.0.1、localhost)和未来部署的
+# 任意域名/IP 都能调后端 API;同时支持 SSE 流式响应(text/event-stream).
+# 注意:allow_origins=["*"] 时不能用 allow_credentials=True(CORS 规范限制),
+# 如以后需要带 cookie / auth header,请改为具体域名白名单而非 "*".
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=False,
+    allow_methods=["*"],
+    allow_headers=["*"],
+    expose_headers=["*"],
+)
 
 
 @app.get("/", include_in_schema=False)
